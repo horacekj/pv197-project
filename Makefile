@@ -8,4 +8,4 @@ showtest:
 	nvvp metrics.nvprof
 
 clean:
-	rm -r project
+	rm -r project metrics.nvprof
