@@ -3,30 +3,38 @@
 #define BLOCK_WIDTH  32
 #define BLOCK_HEIGHT 32
 
-__global__ void mySolve(const int *matrix, float *row, float *col, const int width, const int height) {
+__global__ void mySolve(const int *matrix, float *col, float *row, const int height, const int width) {
 	size_t laneID = threadIdx.x & 31;
 
-	size_t x = blockDim.x * blockIdx.x + threadIdx.x;
-	size_t y = blockDim.y * blockIdx.y;
+	size_t x = blockDim.x * blockIdx.x + threadIdx.x; // absolutni X pozice v matici
+	size_t y = blockIdx.y; // id bloku y
 
-	size_t idx = y * width + x;
+	size_t idx = 32 * y * width + x;
 
 	float vertical = 0;
 
-	for(int i = 0; i < blockDim.y; ++i) {
+	for(int i = 0; i < 32; ++i) {
 		float v = matrix[idx];
 		vertical += v;
-		for(unsigned w = 16; w >= 1; w >>= 2)
+		for(unsigned w = 16; w >= 1; w >>= 1)
 			v += __shfl_down(v, w);
 		if(laneID == 0)
-			atomicAdd(&row[y], v);
-		y++;
+			atomicAdd(&row[y*32+i], v);
 		idx += width;
 	}
 
 	atomicAdd(&col[x], vertical);
 }
 
-void solveGPU(const int *matrix, float *row, float *col, const int width, const int height) {
-	mySolve<<<width/BLOCK_WIDTH, height/BLOCK_HEIGHT>>>(matrix, row, col, width, height);
+__global__ void myAverage(float *array, const int divisor) {
+	int index = blockDim.x * blockIdx.x + threadIdx.x;
+	array[index] = array[index] / divisor;
+}
+
+void solveGPU(const int *matrix, float *avg_stud, float *avg_que, const int students, const int questions) {
+	cudaMemset(avg_que, 0, questions*sizeof(float));
+	cudaMemset(avg_stud, 0, students*sizeof(float));
+	mySolve<<<dim3(questions/32, students/32), dim3(32, 1)>>>(matrix, avg_que, avg_stud, students, questions);
+	myAverage<<<dim3(questions/32), dim3(32, 1)>>>(avg_que, students);
+	myAverage<<<dim3(students/32), dim3(32, 1)>>>(avg_stud, questions);
 }
