@@ -6,14 +6,16 @@ void solveCPU(const int *results, float *avg_stud, float*avg_que, const int stud
         for (int q = 0; q < questions; q++) {
             stud += results[s*questions + q];
         }
-        avg_stud[s] = (float)stud / (float)questions;
+//        avg_stud[s] = (float)stud / (float)questions;
+        avg_stud[s] = (float)stud;
     }
     for (int q = 0; q < questions; q++) {
         int que = 0;
         for (int s = 0; s < students; s++) {
             que += results[s*questions + q];
         }
-        avg_que[q] = (float)que / (float)students;
+//        avg_que[q] = (float)que / (float)students;
+        avg_que[q] = (float)que;
     }
 }
 
