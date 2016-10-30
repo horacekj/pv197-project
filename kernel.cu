@@ -11,10 +11,10 @@ __global__ void mySolve(const int *matrix, float *col, float *row, const int hei
 
 	size_t idx = y * width + x;
 
-	float vertical = 0;
+	int vertical = 0;
 
 	for(int i = 0; i < N_ITERATIONS; ++i) {
-		float v = matrix[idx];
+		int v = matrix[idx];
 		vertical += v;
 		for(unsigned w = 16; w >= 1; w >>= 1)
 			v += __shfl_down(v, w);
